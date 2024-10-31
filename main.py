@@ -39,11 +39,6 @@ async def index():
     <body>
         <h1>Добро пожаловать в FastAPI приложение!</h1>
         <p>Это приложение для работы с записями в базе данных PostgreSQL.</p>
-        <p>Доступные маршруты:</p>
-        <ul>
-            <li><a href="/entries/">Просмотр всех записей</a></li>
-            <li>POST /entries/ - Добавление новой записи</li>
-        </ul>
     </body>
     </html>
     """
@@ -70,3 +65,24 @@ async def get_entries(conn=Depends(get_db_connection)):
         return [{"id": row["id"], "content": row["content"]} for row in rows]
     except Exception as e:
         raise HTTPException(status_code=500, detail="Ошибка при получении записей")
+
+@app.delete("/entries/")
+async def delete_all_entries(conn=Depends(get_db_connection)):
+    query = "DELETE FROM entries"
+    try:
+        await conn.execute(query)
+        return {"message": "Все записи успешно удалены"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Ошибка при удалении записей")
+    
+# Маршрут для удаления конкретной записи по ID
+@app.delete("/entries/{id}")
+async def delete_entry(id: int, conn=Depends(get_db_connection)):
+    query = "DELETE FROM entries WHERE id = $1"
+    try:
+        result = await conn.execute(query, id)
+        if result == "DELETE 0":  # Если запись не найдена
+            raise HTTPException(status_code=404, detail="Запись с таким ID не найдена")
+        return {"message": f"Запись с ID {id} успешно удалена"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Ошибка при удалении записи")
