@@ -1,5 +1,6 @@
 # main.py
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.responses import HTMLResponse
 import asyncpg
 from config import DATABASE_URL
 
@@ -25,9 +26,28 @@ async def startup():
     """)
     await conn.close()
 
-@app.get("/entries/")
+@app.get("/")
 async def index():
-    pass
+    html_content = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Главная страница</title>
+    </head>
+    <body>
+        <h1>Добро пожаловать в FastAPI приложение!</h1>
+        <p>Это приложение для работы с записями в базе данных PostgreSQL.</p>
+        <p>Доступные маршруты:</p>
+        <ul>
+            <li><a href="/entries/">Просмотр всех записей</a></li>
+            <li>POST /entries/ - Добавление новой записи</li>
+        </ul>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
 
 # Маршрут для добавления новой записи в базу данных
 @app.post("/entries/")
