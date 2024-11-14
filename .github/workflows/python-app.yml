@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
 
     services:
@@ -51,9 +51,9 @@ jobs:
           pip install flake8 pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Run migrations
-        run: |
-          alembic upgrade head  # или другой инструмент миграции, если используете
+      # - name: Run migrations
+      #   run: |
+      #     alembic upgrade head  # или другой инструмент миграции, если используете
 
       - name: Run tests
         env:
@@ -61,3 +61,15 @@ jobs:
           DATABASE_URL: postgresql://user:password@localhost:5432/test_db
         run: |
           pytest
+      
+      - name: Run app
+        run: |
+          nohup uvicorn main:app --host 0.0.0.0 --port 8000 &
+        
+      - name: Wait for FastAPI
+        run: |
+          until curl -s http://localhost:8000/docs; do
+            echo "Waiting for FastAPI..."
+            sleep 2
+          done
+          echo "FastAPI is up and running"
